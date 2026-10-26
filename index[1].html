@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Intelligent Food Delivery Agent</title>
+<style>
+    *{box-sizing:border-box}
+    body{
+        margin:0;
+        font-family:Arial,Helvetica,sans-serif;
+        background:#f3f6fa;
+        color:#172033;
+    }
+    header{
+        background:linear-gradient(135deg,#182848,#4b6cb7);
+        color:white;
+        padding:28px 5%;
+    }
+    header h1{margin:0 0 8px;font-size:30px}
+    header p{margin:0;opacity:.9}
+    .wrap{max-width:1200px;margin:24px auto;padding:0 18px}
+    .grid{
+        display:grid;
+        grid-template-columns:repeat(3,1fr);
+        gap:16px;
+        margin-bottom:20px;
+    }
+    .card{
+        background:white;
+        border-radius:14px;
+        padding:20px;
+        box-shadow:0 5px 18px rgba(20,35,60,.08);
+    }
+    .stat{font-size:28px;font-weight:700;margin-top:5px}
+    .muted{color:#64748b;font-size:14px}
+    .two{
+        display:grid;
+        grid-template-columns:1fr 1fr;
+        gap:18px;
+        margin-bottom:20px;
+    }
+    label{display:block;font-weight:600;margin:12px 0 6px}
+    input,select{
+        width:100%;
+        padding:11px 12px;
+        border:1px solid #cbd5e1;
+        border-radius:9px;
+        font-size:15px;
+    }
+    button{
+        border:0;border-radius:9px;padding:11px 15px;
+        cursor:pointer;font-weight:700;margin-top:14px;
+    }
+    .primary{background:#2563eb;color:#fff}
+    .dark{background:#182848;color:#fff}
+    .danger{background:#ef4444;color:white}
+    .success{color:#138a4b;font-weight:700}
+    table{width:100%;border-collapse:collapse}
+    th,td{padding:11px;border-bottom:1px solid #e5e7eb;text-align:left;font-size:14px}
+    th{background:#f8fafc}
+    .tag{
+        display:inline-block;padding:4px 8px;border-radius:20px;
+        font-size:12px;font-weight:700;
+    }
+    .p4{background:#fee2e2;color:#991b1b}
+    .p3{background:#ffedd5;color:#9a3412}
+    .p2{background:#fef3c7;color:#92400e}
+    .p1{background:#dcfce7;color:#166534}
+    .map{
+        position:relative;
+        min-height:360px;
+        border:2px solid #dbe4f0;
+        border-radius:14px;
+        background:#eef4fb;
+        overflow:hidden;
+    }
+    .road{position:absolute;background:#cbd5e1;border-radius:20px}
+    .road.h{height:10px}
+    .road.v{width:10px}
+    .node{
+        position:absolute;width:125px;padding:12px 8px;text-align:center;
+        border-radius:12px;background:white;border:2px solid #475569;
+        font-weight:700;box-shadow:0 4px 10px rgba(0,0,0,.08);
+        z-index:2;
+    }
+    .node small{display:block;font-weight:400;color:#64748b;margin-top:4px}
+    .route-line{
+        position:absolute;height:6px;background:#2563eb;border-radius:8px;
+        transform-origin:left center;z-index:1;
+        display:none;
+    }
+    .agent{
+        margin-top:16px;padding:15px;border-radius:12px;background:#f8fafc;
+    }
+    .result{
+        margin-top:18px;padding:16px;border-radius:12px;background:#0f172a;color:white;
+        min-height:80px;
+    }
+    .result strong{color:#93c5fd}
+    .full{grid-column:1/-1}
+    @media(max-width:800px){
+        .grid,.two{grid-template-columns:1fr}
+    }
+</style>
+</head>
+<body>
+
+<header>
+    <h1>🤖 Intelligent Food Delivery Agent</h1>
+    <p>Campus cafeteria delivery using priority planning, BFS, DFS and A*</p>
+</header>
+
+<div class="wrap">
+
+    <div class="grid">
+        <div class="card">
+            <div class="muted">🔋 Battery</div>
+            <div class="stat" id="battery">100%</div>
+        </div>
+        <div class="card">
+            <div class="muted">📦 Carrying Capacity</div>
+            <div class="stat" id="capacity">5 / 5</div>
+        </div>
+        <div class="card">
+            <div class="muted">📍 Robot Location</div>
+            <div class="stat" id="robotLocation">Cafeteria</div>
+        </div>
+    </div>
+
+    <div class="two">
+        <div class="card">
+            <h2>Place Food Order</h2>
+            <label>Student / Department</label>
+            <input id="customer" placeholder="e.g. Aviral">
+
+            <label>Food</label>
+            <select id="food">
+                <option>Burger</option>
+                <option>Pizza</option>
+                <option>Sandwich</option>
+                <option>Thali</option>
+                <option>Cold Drink</option>
+            </select>
+
+            <label>Quantity</label>
+            <input id="qty" type="number" min="1" value="1">
+
+            <label>Delivery Location</label>
+            <select id="location">
+                <option>Library</option>
+                <option>CSE Department</option>
+                <option>Hostel</option>
+                <option>Sports Complex</option>
+            </select>
+
+            <label>Priority</label>
+            <select id="priority">
+                <option value="1">Low</option>
+                <option value="2">Normal</option>
+                <option value="3">High</option>
+                <option value="4">Emergency</option>
+            </select>
+
+            <button class="primary" onclick="addOrder()">➕ Place Order</button>
+        </div>
+
+        <div class="card">
+            <h2>AI Agent Controls</h2>
+            <p class="muted">The agent selects the best pending order using priority, route cost, battery and capacity.</p>
+            <button class="dark" onclick="compareAlgorithms()">🔎 Compare BFS / DFS / A*</button>
+            <button class="primary" onclick="runAgent()">🤖 Run Intelligent Agent</button>
+            <button class="danger" onclick="resetRobot()">↻ Reset Robot</button>
+
+            <div class="agent">
+                <b>Decision rule</b>
+                <p class="muted">Higher priority is preferred. A* is used to find the least-cost route.</p>
+            </div>
+
+            <div id="result" class="result">Waiting for an AI decision...</div>
+        </div>
+    </div>
+
+    <div class="card" style="margin-bottom:20px">
+        <h2>Campus Map</h2>
+        <div class="map" id="map">
+            <div class="road h" style="left:17%;top:56%;width:64%"></div>
+            <div class="road h" style="left:29%;top:30%;width:50%"></div>
+            <div class="road v" style="left:50%;top:18%;height:55%"></div>
+            <div class="road v" style="left:22%;top:43%;height:35%"></div>
+
+            <div class="node" id="n-cafeteria" style="left:4%;top:49%">🍔 Cafeteria<small>Start</small></div>
+            <div class="node" id="n-gate" style="left:43%;top:49%">🚪 Main Gate</div>
+            <div class="node" id="n-library" style="left:40%;top:5%">📚 Library</div>
+            <div class="node" id="n-cse" style="left:66%;top:49%">💻 CSE Department</div>
+            <div class="node" id="n-hostel" style="left:4%;top:78%">🏠 Hostel</div>
+            <div class="node" id="n-sports" style="left:60%;top:78%">⚽ Sports Complex</div>
+        </div>
+    </div>
+
+    <div class="card">
+        <h2>Orders</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>ID</th><th>Customer</th><th>Food</th><th>Qty</th>
+                    <th>Destination</th><th>Priority</th><th>Status</th>
+                </tr>
+            </thead>
+            <tbody id="ordersBody"></tbody>
+        </table>
+    </div>
+
+</div>
+
+<script>
+const routes = {
+    "Library": {
+        bfs:["Cafeteria","Gate","Library"],
+        dfs:["Cafeteria","Hostel","Sports","Library"],
+        astar:["Cafeteria","Gate","Library"],
+        cost:5
+    },
+    "CSE Department": {
+        bfs:["Cafeteria","Gate","CSE Department"],
+        dfs:["Cafeteria","Hostel","Sports","Library","CSE Department"],
+        astar:["Cafeteria","Gate","CSE Department"],
+        cost:6
+    },
+    "Hostel": {
+        bfs:["Cafeteria","Hostel"],
+        dfs:["Cafeteria","Hostel"],
+        astar:["Cafeteria","Hostel"],
+        cost:4
+    },
+    "Sports Complex": {
+        bfs:["Cafeteria","Hostel","Sports Complex"],
+        dfs:["Cafeteria","Hostel","Sports Complex"],
+        astar:["Cafeteria","Hostel","Sports Complex"],
+        cost:6
+    }
+};
+
+let orders = [];
+let nextId = 101;
+let battery = 100;
+let capacity = 5;
+let robotLocation = "Cafeteria";
+
+function priorityText(p){
+    return p===4 ? "Emergency" : p===3 ? "High" : p===2 ? "Normal" : "Low";
+}
+function priorityClass(p){ return "p"+p; }
+
+function addOrder(){
+    const customer = document.getElementById("customer").value.trim();
+    if(!customer){ alert("Enter student/department name."); return; }
+
+    orders.push({
+        id: nextId++,
+        customer,
+        food: document.getElementById("food").value,
+        qty: Number(document.getElementById("qty").value),
+        location: document.getElementById("location").value,
+        priority: Number(document.getElementById("priority").value),
+        status: "Pending"
+    });
+    document.getElementById("customer").value = "";
+    renderOrders();
+    setResult("✅ Order added. Click <b>Run Intelligent Agent</b>.");
+}
+
+function renderOrders(){
+    const body = document.getElementById("ordersBody");
+    body.innerHTML = orders.length ? orders.map(o => `
+        <tr>
+            <td>#${o.id}</td>
+            <td>${o.customer}</td>
+            <td>${o.food}</td>
+            <td>${o.qty}</td>
+            <td>${o.location}</td>
+            <td><span class="tag ${priorityClass(o.priority)}">${priorityText(o.priority)}</span></td>
+            <td>${o.status}</td>
+        </tr>`).join("") :
+        `<tr><td colspan="7" class="muted">No orders yet.</td></tr>`;
+}
+
+function setResult(html){
+    document.getElementById("result").innerHTML = html;
+}
+
+function compareAlgorithms(){
+    if(!orders.length){ alert("Place an order first."); return; }
+    const o = orders.find(x => x.status==="Pending") || orders[0];
+    const r = routes[o.location];
+
+    setResult(`
+        <b>Algorithm comparison</b><br><br>
+        Destination: <strong>${o.location}</strong><br>
+        BFS: ${r.bfs.join(" → ")}<br>
+        DFS: ${r.dfs.join(" → ")}<br>
+        A*: ${r.astar.join(" → ")}<br>
+        A* cost: <strong>${r.cost} units</strong><br><br>
+        ✅ A* selected as the least-cost route.
+    `);
+    drawRoute(r.astar);
+}
+
+function runAgent(){
+    const pending = orders.filter(o => o.status==="Pending");
+    if(!pending.length){ alert("No pending orders."); return; }
+
+    // Priority first; for a tie, choose shorter A* route.
+    pending.sort((a,b) => {
+        if(b.priority !== a.priority) return b.priority - a.priority;
+        return routes[a.location].cost - routes[b.location].cost;
+    });
+
+    const selected = pending[0];
+    const r = routes[selected.location];
+    const batteryNeeded = r.cost * 5;
+
+    if(selected.qty > capacity){
+        setResult(`❌ Delivery blocked: robot capacity is ${capacity}, but order needs ${selected.qty}.`);
+        return;
+    }
+    if(batteryNeeded > battery){
+        setResult(`❌ Delivery blocked: battery is ${battery}%, but route needs ${batteryNeeded}%.`);
+        return;
+    }
+
+    battery -= batteryNeeded;
+    capacity -= selected.qty;
+    robotLocation = selected.location;
+    selected.status = "Delivered";
+
+    document.getElementById("battery").textContent = battery+"%";
+    document.getElementById("capacity").textContent = capacity+" / 5";
+    document.getElementById("robotLocation").textContent = robotLocation;
+
+    renderOrders();
+    drawRoute(r.astar);
+
+    setResult(`
+        <b>🤖 Intelligent Agent Decision</b><br><br>
+        Selected Order: <strong>#${selected.id}</strong><br>
+        Priority: <strong>${priorityText(selected.priority)}</strong><br>
+        Route: <strong>${r.astar.join(" → ")}</strong><br>
+        Distance: <strong>${r.cost} units</strong><br>
+        Battery used: <strong>${batteryNeeded}%</strong><br><br>
+        <span class="success">✅ Order delivered successfully!</span>
+    `);
+}
+
+function drawRoute(path){
+    document.querySelectorAll(".node").forEach(n => n.style.borderColor="#475569");
+    for(let i=0;i<path.length;i++){
+        const id = ({
+            "Cafeteria":"n-cafeteria",
+            "Gate":"n-gate",
+            "Library":"n-library",
+            "CSE Department":"n-cse",
+            "Hostel":"n-hostel",
+            "Sports Complex":"n-sports"
+        })[path[i]];
+        const el = document.getElementById(id);
+        if(el) el.style.borderColor="#2563eb";
+    }
+}
+
+function resetRobot(){
+    battery=100; capacity=5; robotLocation="Cafeteria";
+    orders.forEach(o => o.status="Pending");
+    document.getElementById("battery").textContent="100%";
+    document.getElementById("capacity").textContent="5 / 5";
+    document.getElementById("robotLocation").textContent="Cafeteria";
+    document.querySelectorAll(".node").forEach(n => n.style.borderColor="#475569");
+    renderOrders();
+    setResult("Robot reset. Ready for the next delivery.");
+}
+
+renderOrders();
+</script>
+
+</body>
+</html>
