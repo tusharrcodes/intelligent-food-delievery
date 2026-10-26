@@ -6,7 +6,7 @@
 <br>
 
 ## 🌐 Live Demo
-**Test the working agent here:** [tusharrcodes.github.io/intelligent-food-delivery](https://tusharrcodes.github.io/intelligent-food-delivery/)
+**Test the working agent here:** [tusharrcodes.github.io/intelligent-food-delivery](https://tusharrcodes.github.io/intelligent-food-delievery/)
 
 ## 🎯 Project Overview
 This repository contains the core codebase for an intelligent web-based agent designed to streamline food delivery interactions. Built as an academic demonstration of web capabilities, the application structure and logic are cleanly organized into a single interactive interface.
